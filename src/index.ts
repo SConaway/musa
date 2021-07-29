@@ -5,9 +5,10 @@ dotenv.config();
 import express from "express";
 import handlebars from "express-handlebars";
 import fetch from "node-fetch";
+import FormData from "form-data";
 
 import prisma from "./prisma";
-import {SlackAuthResponse} from "./types";
+import {SlackAuthResponse, SlackProfileSetResponse} from "./types";
 
 // import {ToadScheduler, SimpleIntervalJob, AsyncTask} from 'toad-scheduler';
 
@@ -26,7 +27,7 @@ app.engine(
   }),
 );
 
-app.get("/", (req, res) =>
+app.get("/", (_req, res) =>
   res.render("main", {
     layout: false,
     slackClientID: process.env.SLACK_CLIENT_ID,
@@ -87,7 +88,6 @@ app.listen(3000, () =>
 );
 
 // const scheduler = new ToadScheduler();
-
 // const task = new AsyncTask(
 //     'simple task',
 //     async () => {
@@ -98,8 +98,22 @@ app.listen(3000, () =>
 //     },
 // );
 // const job = new SimpleIntervalJob({seconds: 2}, task);
-
 // scheduler.addSimpleIntervalJob(job);
-
 // when stopping your app
 // scheduler.stop();
+
+// const f = await fetch(`https://slack.com/api/users.profile.set`, {
+//   headers: {
+//     "Content-Type": "application/json; charset=utf-8",
+//     Authorization: `Bearer ${user.slackToken}`,
+//   },
+//   method: "POST",
+//   body: JSON.stringify({
+//     profile: {
+//       status_text: "making some bots...",
+//       // status_emoji: ":mountain_railway:",
+//       status_expiration: 0,
+//     },
+//   }),
+// });
+// const json = (await f.json()) as SlackProfileSetResponse;

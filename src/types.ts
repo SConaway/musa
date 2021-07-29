@@ -12,3 +12,14 @@ interface SlackAuthSuccess {
 }
 
 export type SlackAuthResponse = SlackAuthFailed | SlackAuthSuccess;
+
+interface SlackProfileSetFailed {
+  ok: false;
+  error: string;
+}
+interface SlackProfileSetSuccess {
+  ok: true;
+}
+export type SlackProfileSetResponse =
+  | SlackProfileSetFailed
+  | SlackProfileSetSuccess;
