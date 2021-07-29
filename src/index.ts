@@ -53,12 +53,19 @@ app.get("/slack", async (req, res) => {
   const json = (await f.json()) as SlackAuthResponse;
 
   if (json.ok) {
-    await prisma.user.create({
-      data: {
-        slackID: json.authed_user.id,
-        slackToken: json.authed_user.access_token,
-      },
-    });
+    if (
+      !(await prisma.user.findUnique({
+        where: {
+          slackID: json.authed_user.id,
+        },
+      }))
+    )
+      await prisma.user.create({
+        data: {
+          slackID: json.authed_user.id,
+          slackToken: json.authed_user.access_token,
+        },
+      });
 
     res.render("slack-success", {
       layout: false,
