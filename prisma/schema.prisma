@@ -13,6 +13,7 @@ model User {
   slackToken String
 
   // spotify stuff added later
-  spotifyRefresh String?
-  spotifyToken   String?
+  spotifyRefresh         String?
+  spotifyToken           String?
+  spotifyTokenExpiration DateTime?
 }

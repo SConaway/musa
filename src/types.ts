@@ -23,3 +23,16 @@ interface SlackProfileSetSuccess {
 export type SlackProfileSetResponse =
   | SlackProfileSetFailed
   | SlackProfileSetSuccess;
+
+interface SpotifyAuthResponseFailure {
+  error: string;
+  error_description: string;
+}
+interface SpotifyAuthResponseSuccess {
+  access_token: string;
+  expires_in: number;
+  refresh_token: string;
+}
+export type SpotifyAuthResponse =
+  | SpotifyAuthResponseFailure
+  | SpotifyAuthResponseSuccess;
