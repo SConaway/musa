@@ -196,138 +196,152 @@ const updateStatuses = async () => {
   const users = await prisma.user.findMany();
 
   for await (let user of users) {
-    if (
-      user.spotifyTokenExpiration &&
-      user.spotifyRefresh &&
-      new Date() > user.spotifyTokenExpiration
-    ) {
+    try {
+      if (
+        user.spotifyTokenExpiration &&
+        user.spotifyRefresh &&
+        new Date() > user.spotifyTokenExpiration
+      ) {
+        const f = await fetch(
+          `https://accounts.spotify.com/api/token?grant_type=refresh_token&refresh_token=${user.spotifyRefresh}&client_id=${process.env.SPOTIFY_CLIENT_ID}&client_secret=${process.env.SPOTIFY_CLIENT_SECRET}`,
+          {
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
+            method: "POST",
+          },
+        );
+
+        const json = (await f.json()) as SpotifyAuthResponse;
+
+        if ("error" in json) {
+          console.log(
+            chalk.red(
+              `Error renewing ${user.slackID}'s token: ${json.error} description=${json.error_description}`,
+              chalk.bgWhiteBright,
+            ),
+          );
+          return;
+        }
+
+        user = await prisma.user.update({
+          where: {
+            slackID: user.slackID,
+          },
+          data: {
+            spotifyToken: json.access_token,
+            spotifyTokenExpiration: new Date(
+              new Date().getTime() + (json.expires_in - 10) * 1000,
+            ),
+          },
+        });
+      }
+
       const f = await fetch(
-        `https://accounts.spotify.com/api/token?grant_type=refresh_token&refresh_token=${user.spotifyRefresh}&client_id=${process.env.SPOTIFY_CLIENT_ID}&client_secret=${process.env.SPOTIFY_CLIENT_SECRET}`,
+        `https://api.spotify.com/v1/me/player?additional_types=track,episode`,
         {
           headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
+            "Content-Type": "application/json; charset=utf-8",
+            Accept: "application/json; charset=utf-8",
+            Authorization: `Bearer ${user.spotifyToken}`,
           },
-          method: "POST",
+          method: "GET",
         },
       );
+      const text = await f.text();
 
-      const json = (await f.json()) as SpotifyAuthResponse;
-
-      if ("error" in json) {
+      if (!text.length) {
+        console.log(chalk.gray(`${user.slackID}: no music, skipping update`));
+        continue;
+      } else if (text.startsWith("U")) {
+        console.log(chalk.yellow(text));
+        console.log(chalk.gray(`${user.slackID}: not authed, skipping update`));
+        continue;
+      } else if (!text.startsWith("{")) {
+        console.log(chalk.yellow(text));
         console.log(
-          chalk.red(
-            `Error renewing ${user.slackID}'s token: ${json.error} description=${json.error_description}`,
-            chalk.bgWhiteBright,
-          ),
-        );
-        return;
-      }
-
-      user = await prisma.user.update({
-        where: {
-          slackID: user.slackID,
-        },
-        data: {
-          spotifyToken: json.access_token,
-          spotifyTokenExpiration: new Date(
-            new Date().getTime() + (json.expires_in - 10) * 1000,
-          ),
-        },
-      });
-    }
-
-    const f = await fetch(
-      `https://api.spotify.com/v1/me/player?additional_types=track,episode`,
-      {
-        headers: {
-          "Content-Type": "application/json; charset=utf-8",
-          Accept: "application/json; charset=utf-8",
-          Authorization: `Bearer ${user.spotifyToken}`,
-        },
-        method: "GET",
-      },
-    );
-    const text = await f.text();
-
-    if (!text.length) {
-      console.log(chalk.gray(`${user.slackID}: no music, skipping update`));
-      continue;
-    } else if (text.startsWith("U")) {
-      console.log(chalk.gray(`${user.slackID}: not authed, skipping update`));
-      continue;
-    } else if (!text.startsWith("{")) {
-      console.log(
-        chalk.gray(
-          `${user.slackID}: other error, skipping update, text=${text}`,
-        ),
-      );
-      continue;
-    }
-
-    const profileJSON = JSON.parse(text) as SpotifyPlayerResponse;
-
-    if ("error" in profileJSON) {
-      console.warn(
-        chalk.red(
-          `Error fetching ${user.slackID}'s player: status=${profileJSON.error.status} description=${profileJSON.error.message}`,
-        ),
-      );
-      continue;
-    }
-
-    if (profileJSON.is_playing) {
-      let statusString = "";
-      let statusEmoji = "";
-
-      if (profileJSON.currently_playing_type === "track") {
-        statusString = profileJSON.item.name;
-        if (statusString.length >= 126) statusString.substr(0, 126);
-        statusString += " • ";
-        for (let i = 0; i < profileJSON.item.artists.length; i++) {
-          const artist = profileJSON.item.artists[i];
-          statusString += artist.name;
-          if (
-            i !== profileJSON.item.artists.length - 1 &&
-            profileJSON.item.artists.length > 1
-          )
-            statusString += ", ";
-        }
-        statusEmoji = ":new_spotify:";
-      } else if (profileJSON.currently_playing_type === "episode") {
-        statusString = `${profileJSON.item.name} • ${profileJSON.item.show.name}`;
-        statusEmoji = ":microphone:";
-      }
-      console.log(chalk.gray(`${user.slackID}: playing: ${statusString}`));
-
-      const f = await fetch(`https://slack.com/api/users.profile.set`, {
-        headers: {
-          "Content-Type": "application/json; charset=utf-8",
-          Authorization: `Bearer ${user.slackToken}`,
-        },
-        method: "POST",
-        body: JSON.stringify({
-          profile: {
-            status_text: statusString,
-            status_emoji: statusEmoji,
-            status_expiration: 90,
-          },
-        }),
-      });
-
-      const slackJSON = (await f.json()) as SlackProfileSetResponse;
-      // console.log(slackJSON);
-
-      if (!slackJSON.ok) {
-        console.warn(
-          chalk.red(
-            `Error setting ${user.slackID}'s status: ${slackJSON.error}`,
-            chalk.bgWhite,
+          chalk.gray(
+            `${user.slackID}: other error, skipping update, text=${text}`,
           ),
         );
         continue;
       }
-    } else {
-      console.log(chalk.gray(`${user.slackID}: not playing, skipping update`));
+
+      const profileJSON = JSON.parse(text) as SpotifyPlayerResponse;
+
+      if ("error" in profileJSON) {
+        console.warn(
+          chalk.red(
+            `Error fetching ${user.slackID}'s player: status=${profileJSON.error.status} description=${profileJSON.error.message}`,
+          ),
+        );
+        continue;
+      }
+
+      if (profileJSON.is_playing) {
+        let statusString = "";
+        let statusEmoji = "";
+
+        if (profileJSON.currently_playing_type === "track") {
+          statusString = profileJSON.item.name;
+          if (statusString.length >= 126) statusString.substr(0, 126);
+          statusString += " • ";
+          for (let i = 0; i < profileJSON.item.artists.length; i++) {
+            const artist = profileJSON.item.artists[i];
+            statusString += artist.name;
+            if (
+              i !== profileJSON.item.artists.length - 1 &&
+              profileJSON.item.artists.length > 1
+            )
+              statusString += ", ";
+          }
+          statusEmoji = ":new_spotify:";
+        } else if (profileJSON.currently_playing_type === "episode") {
+          statusString = `${profileJSON.item.name} • ${profileJSON.item.show.name}`;
+          statusEmoji = ":microphone:";
+        }
+        console.log(chalk.gray(`${user.slackID}: playing: ${statusString}`));
+
+        const f = await fetch(`https://slack.com/api/users.profile.set`, {
+          headers: {
+            "Content-Type": "application/json; charset=utf-8",
+            Authorization: `Bearer ${user.slackToken}`,
+          },
+          method: "POST",
+          body: JSON.stringify({
+            profile: {
+              status_text: statusString,
+              status_emoji: statusEmoji,
+              status_expiration: 90,
+            },
+          }),
+        });
+
+        const slackJSON = (await f.json()) as SlackProfileSetResponse;
+        // console.log(slackJSON);
+
+        if (!slackJSON.ok) {
+          console.warn(
+            chalk.red(
+              `Error setting ${user.slackID}'s status: ${slackJSON.error}`,
+              chalk.bgWhite,
+            ),
+          );
+          continue;
+        }
+      } else {
+        console.log(
+          chalk.gray(`${user.slackID}: not playing, skipping update`),
+        );
+      }
+    } catch (error) {
+      console.error(
+        chalk.red.bgWhite(
+          `error: other error, user=${user.slackID}, error=${JSON.stringify(
+            error,
+          )}`,
+        ),
+      );
     }
   }
 };
