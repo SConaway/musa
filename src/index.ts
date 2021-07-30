@@ -19,7 +19,7 @@ for (const env of environmentVariables) {
 import express from "express";
 import handlebars from "express-handlebars";
 import fetch from "node-fetch";
-import FormData from "form-data";
+import chalk from "chalk";
 import {ToadScheduler, SimpleIntervalJob, AsyncTask} from "toad-scheduler";
 
 import prisma from "./prisma";
@@ -55,6 +55,9 @@ app.get("/", (_req, res) =>
 
 app.get("/slack", async (req, res) => {
   if (req.query.error) {
+    console.log(
+      chalk.red(`error authing slack: ${req.query}`, chalk.bgWhiteBright),
+    );
     res.send(`Error: ${req.query.error}`);
     return;
   }
@@ -95,6 +98,12 @@ app.get("/slack", async (req, res) => {
     return;
   } else {
     if (json.error) {
+      console.log(
+        chalk.red(
+          `error fetching slack token: ${json.error}`,
+          chalk.bgWhiteBright,
+        ),
+      );
       res.send(`Error: ${json.error}`);
       return;
     }
@@ -102,9 +111,10 @@ app.get("/slack", async (req, res) => {
 });
 
 app.get("/spotify", async (req, res) => {
-  console.log(req.query);
-
   if (req.query.error) {
+    console.log(
+      chalk.red(`error authing spotify: ${req.query}`, chalk.bgWhiteBright),
+    );
     res.send(`Error: ${req.query.error}`);
     return;
   }
@@ -117,6 +127,12 @@ app.get("/spotify", async (req, res) => {
       },
     }))
   ) {
+    console.log(
+      chalk.red(
+        `error authing spotify: missing SlackID=${req.query.state}`,
+        chalk.bgWhiteBright,
+      ),
+    );
     res.send("SlackID missing. Please try again.");
     return;
   }
@@ -141,6 +157,9 @@ app.get("/spotify", async (req, res) => {
     const json = (await f.json()) as SpotifyAuthResponse;
 
     if ("error" in json) {
+      console.log(
+        chalk.red(`error fetching spotify token: ${json}`, chalk.bgWhiteBright),
+      );
       res.send(`Error: ${json.error} description=${json.error_description}`);
       return;
     }
@@ -163,16 +182,20 @@ app.get("/spotify", async (req, res) => {
 });
 
 app.listen(3000, () =>
-  console.log(`
-🚀 Server ready at: ${process.env.HOST ?? "http://localhost:3000"}`),
+  console.log(
+    chalk.green(
+      `🚀 Server ready at: ${process.env.HOST ?? "http://localhost:3000"}`,
+    ),
+  ),
 );
 
 const updateStatuses = async () => {
+  console.log(chalk.green("---"));
+  console.log(chalk.green(new Date()));
+
   const users = await prisma.user.findMany();
 
   for await (let user of users) {
-    // console.log(user);
-
     if (
       user.spotifyTokenExpiration &&
       user.spotifyRefresh &&
@@ -190,11 +213,12 @@ const updateStatuses = async () => {
 
       const json = (await f.json()) as SpotifyAuthResponse;
 
-      // console.log(json);
-
       if ("error" in json) {
-        console.warn(
-          `Error renewing ${user.slackID}'s token: ${json.error} description=${json.error_description}`,
+        console.log(
+          chalk.red(
+            `Error renewing ${user.slackID}'s token: ${json.error} description=${json.error_description}`,
+            chalk.bgWhiteBright,
+          ),
         );
         return;
       }
@@ -212,11 +236,6 @@ const updateStatuses = async () => {
       });
     }
 
-    // curl -X "GET"
-    // ""
-    // H "Accept: application/json"
-    // H  "Content-Type: "
-    // H  "Authorization: Bearer BQAcsj5dziMJ8Qsb2sKm-Tsqw4AXQgEJKzxNv8bPXtVUCrqvS6LWet_fi1DBq4sBZu9BO3u6T2C7-qDPLSHVgkh5s9AZykfI3_JF38lbg4s-0sfGZ_93Z1p_p0BbxIbe7PSOgklpEXl_sqNC0gJuFd4I"
     const f = await fetch(
       `https://api.spotify.com/v1/me/player?additional_types=track,episode`,
       {
@@ -228,15 +247,32 @@ const updateStatuses = async () => {
         method: "GET",
       },
     );
+    const text = await f.text();
 
-    const profileJSON = (await f.json()) as SpotifyPlayerResponse;
-    // console.log(JSON.stringify(profileJSON));
+    if (!text.length) {
+      console.log(chalk.gray(`${user.slackID}: no music, skipping update`));
+      continue;
+    } else if (text.startsWith("U")) {
+      console.log(chalk.gray(`${user.slackID}: not authed, skipping update`));
+      continue;
+    } else if (!text.startsWith("{")) {
+      console.log(
+        chalk.gray(
+          `${user.slackID}: other error, skipping update, text=${text}`,
+        ),
+      );
+      continue;
+    }
+
+    const profileJSON = JSON.parse(text) as SpotifyPlayerResponse;
 
     if ("error" in profileJSON) {
       console.warn(
-        `Error fetching ${user.slackID}'s player: status=${profileJSON.error.status} description=${profileJSON.error.message}`,
+        chalk.red(
+          `Error fetching ${user.slackID}'s player: status=${profileJSON.error.status} description=${profileJSON.error.message}`,
+        ),
       );
-      return;
+      continue;
     }
 
     if (profileJSON.is_playing) {
@@ -244,21 +280,24 @@ const updateStatuses = async () => {
       let statusEmoji = "";
 
       if (profileJSON.currently_playing_type === "track") {
-        statusString = `${profileJSON.item.name} • `;
+        statusString = profileJSON.item.name;
+        if (statusString.length >= 126) statusString.substr(0, 126);
+        statusString += " • ";
         for (let i = 0; i < profileJSON.item.artists.length; i++) {
           const artist = profileJSON.item.artists[i];
           statusString += artist.name;
-          if (i === profileJSON.item.artists.length - 1 && i > 0)
+          if (
+            i !== profileJSON.item.artists.length - 1 &&
+            profileJSON.item.artists.length > 1
+          )
             statusString += ", ";
         }
-        statusEmoji = ":musical_note:";
+        statusEmoji = ":new_spotify:";
       } else if (profileJSON.currently_playing_type === "episode") {
         statusString = `${profileJSON.item.name} • ${profileJSON.item.show.name}`;
         statusEmoji = ":microphone:";
       }
-      console.log(statusString);
-      console.log(statusEmoji);
-      console.log(new Date());
+      console.log(chalk.gray(`${user.slackID}: playing: ${statusString}`));
 
       const f = await fetch(`https://slack.com/api/users.profile.set`, {
         headers: {
@@ -274,19 +313,25 @@ const updateStatuses = async () => {
           },
         }),
       });
+
       const slackJSON = (await f.json()) as SlackProfileSetResponse;
       // console.log(slackJSON);
 
       if (!slackJSON.ok) {
         console.warn(
-          `Error setting ${user.slackID}'s status: ${slackJSON.error}`,
+          chalk.red(
+            `Error setting ${user.slackID}'s status: ${slackJSON.error}`,
+            chalk.bgWhite,
+          ),
         );
-        return;
+        continue;
       }
+    } else {
+      console.log(chalk.gray(`${user.slackID}: not playing, skipping update`));
     }
   }
 };
-// updateStatuses();
+updateStatuses();
 
 const scheduler = new ToadScheduler();
 const task = new AsyncTask("update statuses", updateStatuses, (err: Error) => {
