@@ -36,3 +36,37 @@ interface SpotifyAuthResponseSuccess {
 export type SpotifyAuthResponse =
   | SpotifyAuthResponseFailure
   | SpotifyAuthResponseSuccess;
+
+interface SpotifyPlayerResponseFailure {
+  error: {
+    status: number;
+    message: string;
+  };
+}
+interface SpotifyPlayerResponseTrack {
+  item: {
+    artists: [
+      {
+        name: string;
+      },
+    ];
+    name: string;
+  };
+  currently_playing_type: "track";
+  is_playing: boolean;
+}
+interface SpotifyPlayerResponseEpisode {
+  item: {
+    name: string;
+    show: {
+      name: string;
+    };
+  };
+  currently_playing_type: "episode";
+  is_playing: boolean;
+}
+
+export type SpotifyPlayerResponse =
+  | SpotifyPlayerResponseFailure
+  | SpotifyPlayerResponseTrack
+  | SpotifyPlayerResponseEpisode;
