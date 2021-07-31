@@ -191,6 +191,18 @@ const updateStatuses = async () => {
   for await (let user of users) {
     try {
       if (
+        !user.spotifyTokenExpiration ||
+        !user.spotifyRefresh ||
+        !user.spotifyToken
+      ) {
+        console.log(
+          chalk.gray(
+            `${user.slackID}: user does not have a spotify token, skipping update`,
+          ),
+        );
+        continue;
+      }
+      if (
         user.spotifyTokenExpiration &&
         user.spotifyRefresh &&
         new Date() > user.spotifyTokenExpiration
