@@ -1,16 +1,45 @@
 <html lang="en">
 
-  <head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
-  </head>
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Document</title>
 
-  <body>
-    Slack auth done!
-    <a href="https://accounts.spotify.com/authorize?client_id={{{spotifyClientID}}}&response_type=code&redirect_uri={{{host}}}/spotify&scope=user-read-playback-state&state={{{userID}}}">Spotify now...</a>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
 
-  </body>
+
+    body {
+      font-family: "Graphik", "Avenir Next", "Inter", "Nunito Sans", BlinkMacSystemFont, Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      text-align: center;
+      font-size: 1.5rem;
+
+      background-color: #fff;
+    }
+
+    a {
+      text-decoration: underline double rgb(30, 215, 96) 3px;
+      text-underline-offset: 0.6rem;
+    }
+
+    a:hover {
+      text-decoration-color: blue;
+      transition-property: text-underline-color;
+      transition-duration: 300ms;
+    }
+  </style>
+</head>
+
+<body>
+  <div>Slack auth done!</div>
+  <div><a
+      href="https://accounts.spotify.com/authorize?client_id={{{spotifyClientID}}}&response_type=code&redirect_uri={{{host}}}/spotify&scope=user-read-playback-state&state={{{userID}}}">Spotify
+      now...</a></div>
+
+
+</body>
 
 </html>

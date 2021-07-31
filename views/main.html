@@ -91,7 +91,7 @@
 
     .slotify {
       text-decoration: underline double rgb(30, 215, 96) 3px;
-      text-underline-offset: 10px;
+      text-underline-offset: 0.75rem;
     }
 
     /* stolen from: https://jarv.is/notes/css-waving-hand-emoji/ */
@@ -151,6 +151,13 @@
       height: 5.5rem;
       border-radius: 20px;
     }
+
+    .link-image:hover {
+      box-shadow: 3px 6px 2px 1px rgb(85 94 107 / 20%);
+      transition-property: all;
+      transition-duration: 0.2s;
+
+    }
   </style>
 </head>
 
@@ -177,9 +184,10 @@
       <div class="instructions">To begin, click the button below, then follow the prompts:
 
 
-        <div class="link-container"><a
+        <div class="link-container"><a class="link"
             href="https://slack.com/oauth/v2/authorize?user_scope=users.profile:write&client_id={{{slackClientID}}}&redirect_uri={{{host}}}/slack"><img
-              alt="Add to Slack" height="40" width="139" src="https://platform.slack-edge.com/img/add_to_slack.png"
+              class="link-image" alt="Add to Slack" height="40" width="139"
+              src="https://platform.slack-edge.com/img/add_to_slack.png"
               srcset="https://platform.slack-edge.com/img/add_to_slack.png 1x, https://platform.slack-edge.com/img/add_to_slack@2x.png 2x" /></a>
         </div>
       </div>
