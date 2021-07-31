@@ -55,9 +55,7 @@ app.get("/", (_req, res) =>
 
 app.get("/slack", async (req, res) => {
   if (req.query.error) {
-    console.log(
-      chalk.red(`error authing slack: ${req.query}`, chalk.bgWhiteBright),
-    );
+    console.log(chalk.red.bgWhiteBright(`error authing slack: ${req.query}`));
     res.send(`Error: ${req.query.error}`);
     return;
   }
@@ -99,10 +97,7 @@ app.get("/slack", async (req, res) => {
   } else {
     if (json.error) {
       console.log(
-        chalk.red(
-          `error fetching slack token: ${json.error}`,
-          chalk.bgWhiteBright,
-        ),
+        chalk.red.bgWhiteBright(`error fetching slack token: ${json.error}`),
       );
       res.send(`Error: ${json.error}`);
       return;
@@ -112,9 +107,7 @@ app.get("/slack", async (req, res) => {
 
 app.get("/spotify", async (req, res) => {
   if (req.query.error) {
-    console.log(
-      chalk.red(`error authing spotify: ${req.query}`, chalk.bgWhiteBright),
-    );
+    console.log(chalk.red.bgWhiteBright(`error authing spotify: ${req.query}`));
     res.send(`Error: ${req.query.error}`);
     return;
   }
@@ -128,9 +121,8 @@ app.get("/spotify", async (req, res) => {
     }))
   ) {
     console.log(
-      chalk.red(
+      chalk.red.bgWhiteBright(
         `error authing spotify: missing SlackID=${req.query.state}`,
-        chalk.bgWhiteBright,
       ),
     );
     res.send("SlackID missing. Please try again.");
@@ -158,7 +150,7 @@ app.get("/spotify", async (req, res) => {
 
     if ("error" in json) {
       console.log(
-        chalk.red(`error fetching spotify token: ${json}`, chalk.bgWhiteBright),
+        chalk.red.bgWhiteBright(`error fetching spotify token: ${json}`),
       );
       res.send(`Error: ${json.error} description=${json.error_description}`);
       return;
@@ -216,9 +208,8 @@ const updateStatuses = async () => {
 
         if ("error" in json) {
           console.log(
-            chalk.red(
+            chalk.red.bgWhiteBright(
               `Error renewing ${user.slackID}'s token: ${json.error} description=${json.error_description}`,
-              chalk.bgWhiteBright,
             ),
           );
           return;
@@ -284,7 +275,6 @@ const updateStatuses = async () => {
 
         if (profileJSON.currently_playing_type === "track") {
           statusString = profileJSON.item.name;
-          if (statusString.length >= 126) statusString.substr(0, 126);
           statusString += " • ";
           for (let i = 0; i < profileJSON.item.artists.length; i++) {
             const artist = profileJSON.item.artists[i];
@@ -300,6 +290,8 @@ const updateStatuses = async () => {
           statusString = `${profileJSON.item.name} • ${profileJSON.item.show.name}`;
           statusEmoji = ":microphone:";
         }
+        if (statusString.length >= 100)
+          statusString = statusString.substr(0, 97) + "...";
         console.log(chalk.gray(`${user.slackID}: playing: ${statusString}`));
 
         const f = await fetch(`https://slack.com/api/users.profile.set`, {
@@ -322,9 +314,8 @@ const updateStatuses = async () => {
 
         if (!slackJSON.ok) {
           console.warn(
-            chalk.red(
+            chalk.red.bgWhiteBright(
               `Error setting ${user.slackID}'s status: ${slackJSON.error}`,
-              chalk.bgWhite,
             ),
           );
           continue;
