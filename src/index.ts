@@ -37,11 +37,12 @@ const app = express();
 app.use(express.json());
 app.use(express.static("public"));
 
-app.set("view engine", "handlebars");
+app.set("view engine", "html");
 app.engine(
-  "handlebars",
+  "html",
   handlebars({
     layoutsDir: __dirname + "/views",
+    extname: ".html",
   }),
 );
 
@@ -245,8 +246,11 @@ const updateStatuses = async () => {
         console.log(chalk.gray(`${user.slackID}: no music, skipping update`));
         continue;
       } else if (text.startsWith("U")) {
-        console.log(chalk.yellow(text));
-        console.log(chalk.gray(`${user.slackID}: not authed, skipping update`));
+        console.log(
+          chalk.gray(
+            `${user.slackID}: user is not allow-listed, skipping update`,
+          ),
+        );
         continue;
       } else if (!text.startsWith("{")) {
         console.log(chalk.yellow(text));
@@ -289,6 +293,13 @@ const updateStatuses = async () => {
         } else if (profileJSON.currently_playing_type === "episode") {
           statusString = `${profileJSON.item.name} • ${profileJSON.item.show.name}`;
           statusEmoji = ":microphone:";
+        } else {
+          console.log(
+            chalk.yellow(
+              `${user.slackID}: unknown type playing`,
+              chalk.bgWhiteBright(profileJSON),
+            ),
+          );
         }
         if (statusString.length >= 100)
           statusString = statusString.substr(0, 97) + "...";
@@ -342,7 +353,7 @@ const scheduler = new ToadScheduler();
 const task = new AsyncTask("update statuses", updateStatuses, (err: Error) => {
   console.error(`Error in task: ${err}`);
 });
-const job = new SimpleIntervalJob({seconds: 30}, task);
+const job = new SimpleIntervalJob({seconds: 15}, task);
 scheduler.addSimpleIntervalJob(job);
 // when stopping your app
 // scheduler.stop();

@@ -1,0 +1,190 @@
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <title>Slotify</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+
+    body {
+      font-family: "Graphik", "Avenir Next", "Inter", "Nunito Sans", BlinkMacSystemFont, Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      text-align: center;
+      font-size: 1.25rem;
+
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      min-height: 100%;
+
+      background-color: #fff;
+    }
+
+    header {
+      /* padding: 0 2vw; */
+
+      display: flex;
+      flex: 1;
+      justify-content: center;
+      width: 100%;
+      margin: 3px 0;
+    }
+
+    .logo-container {
+      width: 100%;
+      max-width: 400px;
+
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-around;
+      /* background-color: #999; */
+      padding: 0 5ch;
+    }
+
+    .spotify,
+    .slack,
+    .logo-text {
+      margin: 0 0.25rem;
+    }
+
+    .spotify-image,
+    .slack-image {
+      height: 2.5rem;
+    }
+
+    main {
+      /* background-color: yellow; */
+      flex: 13;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100vw;
+    }
+
+    .main-wrapper {
+      background-color: #e0e6ed;
+      border: 2px solid #8492a6;
+      border-radius: 30px;
+
+      height: 94%;
+      width: 90%;
+      max-width: 600px;
+      padding: 5vw;
+
+
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-around;
+    }
+
+    .welcome {
+      font-size: 3rem;
+      line-height: 1.25;
+    }
+
+    .slotify {
+      text-decoration: underline double rgb(30, 215, 96) 3px;
+      text-underline-offset: 10px;
+    }
+
+    /* stolen from: https://jarv.is/notes/css-waving-hand-emoji/ */
+    .wave {
+      animation-name: wave-animation;
+      /* Refers to the name of your @keyframes element below */
+      animation-duration: 2.5s;
+      /* Change to speed up or slow down */
+      animation-iteration-count: infinite;
+      /* Never stop waving :) */
+      transform-origin: 70% 70%;
+      /* Pivot around the bottom-left palm */
+      display: inline-block;
+
+      font-size: 4rem;
+    }
+
+    @keyframes wave-animation {
+      0% {
+        transform: rotate(0.0deg)
+      }
+
+      10% {
+        transform: rotate(14.0deg)
+      }
+
+      20% {
+        transform: rotate(-8.0deg)
+      }
+
+      30% {
+        transform: rotate(14.0deg)
+      }
+
+      40% {
+        transform: rotate(-4.0deg)
+      }
+
+      50% {
+        transform: rotate(10.0deg)
+      }
+
+      80% {
+        transform: rotate(0.0deg)
+      }
+
+      100% {
+        transform: rotate(0.0deg)
+      }
+    }
+
+    .description {
+      padding: 1ch;
+    }
+
+    .preview-image {
+      height: 5.5rem;
+      border-radius: 20px;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="logo-container">
+      <span class="spotify"><img class="spotify-image"
+          src="https://storage.googleapis.com/pr-newsroom-wp/1/2018/11/Spotify_Logo_RGB_Green.png" alt="Spotify"></span>
+      <span class="logo-text">Meets</span>
+      <span class="slack"><img class="slack-image"
+          src="https://cdn.brandfolder.io/5H442O3W/at/pl546j-7le8zk-btwjnu/Slack_RGB.png?height=100&width=244"
+          alt="Slack"></span>
+    </div>
+  </header>
+  <main>
+    <div class="main-wrapper">
+      <div class="welcome">Welcome to <span class="slotify">Slotify!</span></div>
+      <div class="wave">👋</div>
+      <div class="description">Slotify is a bridge between Spotify and Slack to set a user’s status as the song they
+        are listening to.</div>
+      <div class="preview"><img src="https://cloud-93teffpp1-hack-club-bot.vercel.app/0slack_07-30-2021_08.33.15_pm.png"
+          alt="Preview of a Slotify-set status" class="preview-image"></div>
+      <!-- get new one and host in folder -->
+      <div class="instructions">To begin, click the button below, then follow the prompts:
+
+
+        <div class="link-container"><a
+            href="https://slack.com/oauth/v2/authorize?user_scope=users.profile:write&client_id={{{slackClientID}}}&redirect_uri={{{host}}}/slack"><img
+              alt="Add to Slack" height="40" width="139" src="https://platform.slack-edge.com/img/add_to_slack.png"
+              srcset="https://platform.slack-edge.com/img/add_to_slack.png 1x, https://platform.slack-edge.com/img/add_to_slack@2x.png 2x" /></a>
+        </div>
+      </div>
+    </div>
+  </main>
+</body>
+
+</html>
