@@ -18,6 +18,7 @@ for (const env of environmentVariables) {
 // import {Prisma, PrismaClient} from "@prisma/client";
 import express from "express";
 import handlebars from "express-handlebars";
+import {urlencoded} from "body-parser";
 import fetch from "node-fetch";
 import chalk from "chalk";
 import {ToadScheduler, SimpleIntervalJob, AsyncTask} from "toad-scheduler";
@@ -36,6 +37,8 @@ const app = express();
 
 app.use(express.json());
 app.use(express.static("public"));
+
+app.use(urlencoded({extended: true}));
 
 app.set("view engine", "html");
 app.engine(
@@ -85,6 +88,7 @@ app.get("/slack", async (req, res) => {
         data: {
           slackID: json.authed_user.id,
           slackToken: json.authed_user.access_token,
+          enabled: false,
         },
       });
 
@@ -167,11 +171,47 @@ app.get("/spotify", async (req, res) => {
         spotifyTokenExpiration: new Date(
           new Date().getTime() + (json.expires_in - 10) * 1000,
         ),
+        enabled: true,
       },
     });
 
     res.send("done!");
   }
+});
+
+app.post("/slotify-toggle", async (req, res) => {
+  let text = "";
+
+  let user = await prisma.user.findUnique({
+    where: {
+      slackID: req.body.user_id as string,
+    },
+  });
+
+  if (!user) {
+    console.log(
+      chalk.red.bgWhiteBright(
+        `error toggling: missing SlackID=${req.query.state}`,
+      ),
+    );
+    text = `You, ${req.body.user_id}, have not signed up for Slotify. Check out <#C02A1GTH9TK> to join!`;
+  } else {
+    console.log(chalk.green(`${user.slackID}: toggling`));
+    user = await prisma.user.update({
+      where: {
+        slackID: user.slackID,
+      },
+      data: {
+        enabled: !user.enabled,
+      },
+    });
+    text = `${
+      user.enabled ? "Enabled" : "Disabled"
+    }! Re-run this command to toggle. `;
+  }
+
+  res.setHeader("Content-type", "application/json");
+  res.status(200).send({text, response_type: "ephemeral"});
 });
 
 app.listen(3000, () =>
@@ -189,6 +229,10 @@ const updateStatuses = async () => {
   const users = await prisma.user.findMany();
 
   for await (let user of users) {
+    if (!user.enabled) {
+      console.log(chalk.gray(`${user.slackID}: disabled`));
+      continue;
+    }
     try {
       if (
         !user.spotifyTokenExpiration ||
@@ -309,7 +353,7 @@ const updateStatuses = async () => {
           console.log(
             chalk.yellow(
               `${user.slackID}: unknown type playing`,
-              chalk.bgWhiteBright(profileJSON),
+              chalk.bgWhiteBright(JSON.stringify(profileJSON)),
             ),
           );
         }
@@ -333,7 +377,6 @@ const updateStatuses = async () => {
         });
 
         const slackJSON = (await f.json()) as SlackProfileSetResponse;
-        // console.log(slackJSON);
 
         if (!slackJSON.ok) {
           console.warn(
