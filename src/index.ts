@@ -191,7 +191,7 @@ app.post("/slotify-toggle", async (req, res) => {
   if (!user) {
     console.log(
       chalk.red.bgWhiteBright(
-        `error toggling: missing SlackID=${req.query.state}`,
+        `error toggling: missing SlackID=${req.body.user_id}`,
       ),
     );
     text = `You, ${req.body.user_id}, have not signed up for Slotify. Check out <#C02A1GTH9TK> to join!`;
@@ -246,11 +246,7 @@ const updateStatuses = async () => {
         );
         continue;
       }
-      if (
-        user.spotifyTokenExpiration &&
-        user.spotifyRefresh &&
-        new Date() > user.spotifyTokenExpiration
-      ) {
+      if (new Date() > user.spotifyTokenExpiration) {
         const f = await fetch(
           `https://accounts.spotify.com/api/token?grant_type=refresh_token&refresh_token=${user.spotifyRefresh}&client_id=${process.env.SPOTIFY_CLIENT_ID}&client_secret=${process.env.SPOTIFY_CLIENT_SECRET}`,
           {
@@ -349,6 +345,10 @@ const updateStatuses = async () => {
         } else if (profileJSON.currently_playing_type === "episode") {
           statusString = `${profileJSON.item.name} • ${profileJSON.item.show.name}`;
           statusEmoji = ":microphone:";
+        } else if (profileJSON.currently_playing_type === "ad") {
+          console.log(chalk.gray(`${user.slackID}: listening to type=ad`));
+        } else if (profileJSON.currently_playing_type === "unknown") {
+          console.log(chalk.gray(`${user.slackID}: listening to type=unknown`));
         } else {
           console.log(
             chalk.yellow(

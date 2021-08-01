@@ -66,7 +66,19 @@ interface SpotifyPlayerResponseEpisode {
   is_playing: boolean;
 }
 
+interface SpotifyPlayerResponseAd {
+  currently_playing_type: "ad";
+  is_playing: boolean;
+}
+
+interface SpotifyPlayerResponseUnknown {
+  currently_playing_type: "unknown";
+  is_playing: boolean;
+}
+
 export type SpotifyPlayerResponse =
   | SpotifyPlayerResponseFailure
   | SpotifyPlayerResponseTrack
+  | SpotifyPlayerResponseAd
+  | SpotifyPlayerResponseUnknown
   | SpotifyPlayerResponseEpisode;
