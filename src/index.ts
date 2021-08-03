@@ -1,3 +1,5 @@
+import chalk from "chalk";
+
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -10,17 +12,15 @@ const environmentVariables = [
 ];
 for (const env of environmentVariables) {
   if (!process.env[env]) {
-    console.error(`Please define ${env}`);
+    console.error(chalk.red(`Please define ${env}`));
     process.exit(1);
   }
 }
 
-// import {Prisma, PrismaClient} from "@prisma/client";
 import express from "express";
 import handlebars from "express-handlebars";
 import {urlencoded} from "body-parser";
 import fetch from "node-fetch";
-import chalk from "chalk";
 import {ToadScheduler, SimpleIntervalJob, AsyncTask} from "toad-scheduler";
 
 import prisma from "./prisma";

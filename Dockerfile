@@ -4,6 +4,6 @@ WORKDIR /usr/src/app
 
 COPY . .
 
-RUN yarn && yarn build
+RUN ./setup.sh
 
 CMD ["yarn", "start"]

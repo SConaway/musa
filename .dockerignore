@@ -1,0 +1,8 @@
+*
+!package.json
+!yarn.lock
+!tsconfig.json
+!setup.sh
+!prisma/
+!src/
+!views/
