@@ -308,7 +308,7 @@ const updateStatuses = async () => {
         console.log(chalk.yellow(text));
         console.log(
           chalk.gray(
-            `${user.slackID}: other error, skipping update, text=${text}`,
+            `${user.slackID}: other error, skipping update, status=${f.status}, text=${text}`,
           ),
         );
         continue;
