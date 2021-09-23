@@ -408,7 +408,7 @@ const scheduler = new ToadScheduler();
 const task = new AsyncTask("update statuses", updateStatuses, (err: Error) => {
   console.error(`Error in task: ${err}`);
 });
-const job = new SimpleIntervalJob({seconds: 15}, task);
+const job = new SimpleIntervalJob({seconds: 30}, task);
 scheduler.addSimpleIntervalJob(job);
 // when stopping your app
 // scheduler.stop();
