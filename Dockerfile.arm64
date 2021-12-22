@@ -1,7 +1,5 @@
 FROM node:16
 
-LABEL commit=${GITHUB_SHA:-NA}
-
 WORKDIR /usr/src/app
 
 COPY . .
