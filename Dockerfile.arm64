@@ -2,6 +2,8 @@ FROM node:16
 
 WORKDIR /usr/src/app
 
+COPY .git/ .git/
+
 COPY . .
 
 RUN ./setup.sh
