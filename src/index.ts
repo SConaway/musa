@@ -276,6 +276,34 @@ app.post("/musa-status", async (req, res) => {
   res.status(200).send({text, response_type: "ephemeral"});
 });
 
+app.post("/musa-list-users", async (req, res) => {
+  if (req.body.user_id !== process.env.ADMIN_USER_ID) {
+    res.setHeader("Content-type", "application/json");
+    res.status(200).send({
+      text: "You cannot list Musa users.",
+      response_type: "ephemeral",
+    });
+    return;
+  }
+
+  let text = `Musa users are: \n`;
+
+  const users = await prisma.user.findMany();
+
+  users.forEach(
+    (user, index) =>
+      (text = text.concat(
+        `${index + 1}. <@${user.slackID}> (\`${user.slackID}\`), ${
+          user.enabled
+        }, ${user.spotifyTokenExpiration} \n`,
+      )),
+  );
+  text = text.trim();
+
+  res.setHeader("Content-type", "application/json");
+  res.status(200).send({text, response_type: "ephemeral"});
+});
+
 app.listen(3000, () =>
   console.log(
     chalk.green(
