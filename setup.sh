@@ -1,5 +1,9 @@
 #! /bin/sh
 
+echo $(uname -a)
+
+set -eux
+
 yarn
 
 yarn p:gen
