@@ -179,7 +179,12 @@ app.get("/spotify", async (req, res) => {
       },
     });
 
-    res.send("done!");
+    res.render("done", {
+      layout: false,
+      // spotifyClientID: process.env.SPOTIFY_CLIENT_ID,
+      // host: process.env.HOST ?? "http://localhost:3000",
+      // userID: json.authed_user.id,
+    });
   }
 });
 
