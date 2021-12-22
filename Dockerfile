@@ -1,8 +1,8 @@
 FROM node:16-alpine
 
-WORKDIR /usr/src/app
+LABEL commit=${GITHUB_SHA:-NA}
 
-COPY .git/ .git/
+WORKDIR /usr/src/app
 
 COPY . .
 
