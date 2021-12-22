@@ -9,6 +9,7 @@ const environmentVariables = [
   "SLACK_CLIENT_SECRET",
   "SPOTIFY_CLIENT_ID",
   "SPOTIFY_CLIENT_SECRET",
+  "ADMIN_USER_ID",
 ];
 for (const env of environmentVariables) {
   if (!process.env[env]) {
@@ -226,14 +227,37 @@ app.post("/musa-toggle", async (req, res) => {
 app.post("/musa-status", async (req, res) => {
   let text = "";
 
+  let userID = req.body.user_id as string;
+  let type: "requester" | "specified" = "requester";
+
+  if ((req.body.text as string).length > 1) {
+    if (req.body.user_id !== process.env.ADMIN_USER_ID) {
+      res.setHeader("Content-type", "application/json");
+      res.status(200).send({
+        text: "You cannot check Musa status for other users.",
+        response_type: "ephemeral",
+      });
+      return;
+    }
+    const inputID = (req.body.text as string)
+      .slice(2)
+      .split(">")[0]
+      .split("|")[0];
+
+    userID = inputID;
+    type = "specified";
+  }
+
   let user = await prisma.user.findUnique({
     where: {
-      slackID: req.body.user_id as string,
+      slackID: userID,
     },
   });
 
   if (!user || !user.slackToken) {
-    text = `You, ${req.body.user_id}, have not signed up for Musa. Check out <#C02A1GTH9TK> to join!`;
+    if (type === "requester")
+      text = `You, <@${userID}> (\`${userID}\`), have not signed up for Musa. Check out <#C02A1GTH9TK> to join!`;
+    else text = `<@${userID}> (\`${userID}\`) has not signed up for Musa.`;
   } else if (
     !user.spotifyRefresh ||
     !user.spotifyToken ||
@@ -243,7 +267,7 @@ app.post("/musa-status", async (req, res) => {
   } else if (new Date() > user.spotifyTokenExpiration) {
     text = `Spotify authentication expired. Head to ${process.env.HOST} to fix.`;
   } else if (!user.enabled) {
-    text = "Musa disabled. Run `/musa-toggle` to reenable.";
+    text = "Musa disabled. Run `/musa-toggle` to re-enable.";
   } else {
     text = "All good!";
   }
