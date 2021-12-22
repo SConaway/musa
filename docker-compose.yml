@@ -11,7 +11,7 @@ services:
       - app
 
   app:
-    image: "sconaway/slotify"
+    image: "sconaway/musa"
     environment:
       - "DATABASE_URL=postgresql://postgres:<url-encoded db password>@db:5432/postgres"
       - "SLACK_CLIENT_ID=<slack id>"

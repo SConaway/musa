@@ -179,7 +179,7 @@ app.get("/spotify", async (req, res) => {
   }
 });
 
-app.post("/slotify-toggle", async (req, res) => {
+app.post("/musa-toggle", async (req, res) => {
   let text = "";
 
   let user = await prisma.user.findUnique({
@@ -194,7 +194,7 @@ app.post("/slotify-toggle", async (req, res) => {
         `error toggling: missing SlackID=${req.body.user_id}`,
       ),
     );
-    text = `You, ${req.body.user_id}, have not signed up for Slotify. Check out <#C02A1GTH9TK> to join!`;
+    text = `You, ${req.body.user_id}, have not signed up for Musa. Check out <#C02A1GTH9TK> to join!`;
   } else {
     console.log(chalk.green(`${user.slackID}: toggling`));
     user = await prisma.user.update({
