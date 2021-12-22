@@ -3,6 +3,7 @@
 !yarn.lock
 !tsconfig.json
 !setup.sh
+!start.sh
 !prisma/
 !src/
 !views/
