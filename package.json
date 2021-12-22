@@ -4,10 +4,11 @@
   "license": "MIT",
   "scripts": {
     "start": "node dist/index.js",
-    "pgen": "npx prisma generate",
     "build": "tsc",
     "dev": "nodemon --watch src --exec ts-node src/index.ts",
-    "pretty": "prettier --write ."
+    "pretty": "prettier --write .",
+    "p:gen": "npx prisma generate",
+    "p:deploy": "prisma migrate deploy"
   },
   "dependencies": {
     "@prisma/client": "3",

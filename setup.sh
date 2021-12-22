@@ -2,7 +2,7 @@
 
 yarn
 
-yarn pgen
+yarn p:gen
 
 yarn build
 

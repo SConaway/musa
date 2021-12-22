@@ -6,4 +6,4 @@ COPY . .
 
 RUN ./setup.sh
 
-CMD ["yarn", "start"]
+CMD ["./start.sh"]
