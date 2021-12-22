@@ -59,7 +59,11 @@ app.get("/", (_req, res) =>
 
 app.get("/slack", async (req, res) => {
   if (req.query.error) {
-    console.log(chalk.red.bgWhiteBright(`error authing slack: ${req.query}`));
+    console.log(
+      chalk.red.bgWhiteBright(
+        `error authing slack: ${JSON.stringify(req.query)}`,
+      ),
+    );
     res.send(`Error: ${req.query.error}`);
     return;
   }
@@ -229,10 +233,6 @@ const updateStatuses = async () => {
   const users = await prisma.user.findMany();
 
   for await (let user of users) {
-    if (!user.enabled) {
-      console.log(chalk.gray(`${user.slackID}: disabled`));
-      continue;
-    }
     try {
       if (
         !user.spotifyTokenExpiration ||
@@ -280,6 +280,13 @@ const updateStatuses = async () => {
           },
         });
       }
+
+      if (!user.enabled) {
+        console.log(chalk.gray(`${user.slackID}: disabled`));
+        continue;
+      }
+
+      console.log("f");
 
       const f = await fetch(
         `https://api.spotify.com/v1/me/player?additional_types=track,episode`,
