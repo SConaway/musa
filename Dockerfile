@@ -6,4 +6,4 @@ COPY . .
 
 RUN ./setup.sh
 
-CMD ["./start.sh"]
+CMD ["sh", "./start.sh"]
