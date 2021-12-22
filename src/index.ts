@@ -223,6 +223,35 @@ app.post("/musa-toggle", async (req, res) => {
   res.status(200).send({text, response_type: "ephemeral"});
 });
 
+app.post("/musa-status", async (req, res) => {
+  let text = "";
+
+  let user = await prisma.user.findUnique({
+    where: {
+      slackID: req.body.user_id as string,
+    },
+  });
+
+  if (!user || !user.slackToken) {
+    text = `You, ${req.body.user_id}, have not signed up for Musa. Check out <#C02A1GTH9TK> to join!`;
+  } else if (
+    !user.spotifyRefresh ||
+    !user.spotifyToken ||
+    !user.spotifyTokenExpiration
+  ) {
+    text = `Spotify authentication incomplete. Head to ${process.env.HOST} to continue.`;
+  } else if (new Date() > user.spotifyTokenExpiration) {
+    text = `Spotify authentication expired. Head to ${process.env.HOST} to fix.`;
+  } else if (!user.enabled) {
+    text = "Musa disabled. Run `/musa-toggle` to reenable.";
+  } else {
+    text = "All good!";
+  }
+
+  res.setHeader("Content-type", "application/json");
+  res.status(200).send({text, response_type: "ephemeral"});
+});
+
 app.listen(3000, () =>
   console.log(
     chalk.green(
