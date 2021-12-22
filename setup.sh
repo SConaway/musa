@@ -1,8 +1,10 @@
 #! /bin/sh
 
+set -eux
+
 echo $(uname -a)
 
-set -eux
+cat .git/ORIG_HEAD
 
 yarn
 
