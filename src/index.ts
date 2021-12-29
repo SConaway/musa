@@ -372,8 +372,6 @@ const updateStatuses = async () => {
         continue;
       }
 
-      console.log("f");
-
       const f = await fetch(
         `https://api.spotify.com/v1/me/player?additional_types=track,episode`,
         {
