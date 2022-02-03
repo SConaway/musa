@@ -357,7 +357,7 @@ const updateStatuses = async () => {
               `Error renewing ${user.slackID}'s token: ${json.error} description=${json.error_description}`,
             ),
           );
-          return;
+          continue;
         }
 
         user = await prisma.user.update({
