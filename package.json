@@ -9,7 +9,7 @@
     "pretty": "prettier --write .",
     "p:gen": "npx prisma generate",
     "p:deploy": "prisma migrate deploy",
-    "p:studio": "prisma studio
+    "p:studio": "prisma studio"
   },
   "dependencies": {
     "@prisma/client": "3",
