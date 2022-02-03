@@ -8,7 +8,8 @@
     "dev": "nodemon --watch src --exec ts-node src/index.ts",
     "pretty": "prettier --write .",
     "p:gen": "npx prisma generate",
-    "p:deploy": "prisma migrate deploy"
+    "p:deploy": "prisma migrate deploy",
+    "p:studio": "prisma studio
   },
   "dependencies": {
     "@prisma/client": "3",
