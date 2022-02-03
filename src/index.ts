@@ -218,7 +218,9 @@ app.post("/musa-toggle", async (req, res) => {
     text = `${
       user.enabled ? "Enabled" : "Disabled"
     }! Re-run this command to toggle. `;
+    console.log(chalk.gray(`toggle requested for ${req.body.user_id as string}, enabled=${user.enabled}`))
   }
+
 
   res.setHeader("Content-type", "application/json");
   res.status(200).send({text, response_type: "ephemeral"});
@@ -272,6 +274,8 @@ app.post("/musa-status", async (req, res) => {
     text = "All good!";
   }
 
+  console.log(chalk.gray(`status requested for ${userID}: ${text}`))
+
   res.setHeader("Content-type", "application/json");
   res.status(200).send({text, response_type: "ephemeral"});
 });
@@ -299,6 +303,8 @@ app.post("/musa-list-users", async (req, res) => {
       )),
   );
   text = text.trim();
+
+  console.log(chalk.gray(`Users: ${text}`))
 
   res.setHeader("Content-type", "application/json");
   res.status(200).send({text, response_type: "ephemeral"});
