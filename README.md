@@ -17,26 +17,26 @@
        "slash_commands": [
          {
            "command": "/musa-toggle",
-           "url": "https://<your domain>/musa-toggle",
+           "url": "http://<your domain>/musa-toggle",
            "description": "Toggles Musa for your user",
            "should_escape": true
          },
          {
            "command": "/musa-status",
-           "url": "https://<your domain>/musa-status",
+           "url": "http://<your domain>/musa-status",
            "description": "Gets the status of Musa for your user",
            "should_escape": true
          },
          {
            "command": "/musa-list-users",
-           "url": "https://<your domain>/musa-list-users",
+           "url": "http://<your domain>/musa-list-users",
            "description": "Gets Musa users",
            "should_escape": true
          }
        ]
      },
      "oauth_config": {
-       "redirect_urls": ["https://<your domain>/slack"],
+       "redirect_urls": ["http://<your domain>/slack"],
        "scopes": {
          "user": ["users.profile:write"],
          "bot": ["commands"]
@@ -58,20 +58,22 @@
 
 3. Create a `.env` file or populate the `docker-compose.yml` file with the following:
 
-```bash
-DATABASE_URL=""
-SLACK_CLIENT_ID=""
-SLACK_CLIENT_SECRET=""
-SPOTIFY_CLIENT_ID=""
-SPOTIFY_CLIENT_SECRET=""
-ADMIN_USER_ID=""
-```
+   ```bash
+   DATABASE_URL=""
+   SLACK_CLIENT_ID=""
+   SLACK_CLIENT_SECRET=""
+   SPOTIFY_CLIENT_ID=""
+   SPOTIFY_CLIENT_SECRET=""
+   ADMIN_USER_ID=""
+   ```
 
 4. Deploy the app using your favorite method. I'm using Docker Compose.
 
-```bash
-cd <project root>
-docker-compose up -d
-```
+   ```bash
+   cd <project root>
+   docker-compose up -d
+   ```
 
-5. Go to `https://<your domain>/` and get started!
+   In my deployment, I have [Traefik](https://traefik.io/) as a reverse proxy, so I have all the URLs specified with `https://`.
+
+5. Go to `http://<your domain>/` and get started!
