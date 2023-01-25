@@ -1,9 +1,0 @@
-FROM node:18
-
-WORKDIR /usr/src/app
-
-COPY . .
-
-RUN ./setup.sh
-
-CMD ["sh", "./start.sh"]
