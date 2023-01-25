@@ -23,4 +23,6 @@ COPY start.sh prisma/ ./
 
 COPY --from=builder /usr/src/app/dist/ dist/
 
+RUN yarn prisma generate
+
 CMD ./start.sh
