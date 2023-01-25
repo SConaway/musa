@@ -20,7 +20,8 @@
     // typescript options here
     "noPropertyAccessFromIndexSignature": false,
     "esModuleInterop": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "outDir": "dist"
     // "module": "com"
   },
   "exclude": ["dist"]
