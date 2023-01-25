@@ -12,23 +12,22 @@
     "p:studio": "prisma studio"
   },
   "dependencies": {
-    "@prisma/client": "^3.15.2",
+    "@prisma/client": "4",
     "body-parser": "^1.20.1",
-    "chalk": "^4.1.2",
-    "dotenv": "^10.0.0",
+    "chalk": "^5.2.0",
+    "dotenv": "^16.0.3",
     "express": "^4.18.2",
-    "express-handlebars": "^5.3.5",
-    "node-fetch": "^2.6.7",
-    "toad-scheduler": "^1.6.1"
+    "express-handlebars": "^6.0.6",
+    "node-fetch": "^3.3.0",
+    "toad-scheduler": "^2.2.0"
   },
   "devDependencies": {
-    "@types/express": "4.17.14",
-    "@types/express-handlebars": "^5.3.1",
-    "@types/node": "^16.4.10",
-    "@types/node-fetch": "^2.6.2",
+    "@tsconfig/node18-strictest": "^1.0.0",
+    "@types/express": "4.17.16",
+    "@types/node": "^18.11.18",
     "nodemon": "^2.0.20",
-    "prisma": "^3.15.2",
+    "prisma": "4",
     "ts-node": "^10.9.1",
-    "typescript": "~4.7.4"
+    "typescript": "^4.9.4"
   }
 }

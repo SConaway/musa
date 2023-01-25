@@ -19,13 +19,13 @@ for (const env of environmentVariables) {
 }
 
 import express from "express";
-import handlebars from "express-handlebars";
+import {engine as handlebars} from "express-handlebars";
 import {urlencoded} from "body-parser";
 import fetch from "node-fetch";
 import {ToadScheduler, SimpleIntervalJob, AsyncTask} from "toad-scheduler";
 
 import prisma from "./prisma";
-import {
+import type {
   SlackAuthResponse,
   SlackProfileSetResponse,
   SpotifyAuthResponse,
@@ -218,9 +218,14 @@ app.post("/musa-toggle", async (req, res) => {
     text = `${
       user.enabled ? "Enabled" : "Disabled"
     }! Re-run this command to toggle. `;
-    console.log(chalk.gray(`toggle requested for ${req.body.user_id as string}, enabled=${user.enabled}`))
+    console.log(
+      chalk.gray(
+        `toggle requested for ${req.body.user_id as string}, enabled=${
+          user.enabled
+        }`,
+      ),
+    );
   }
-
 
   res.setHeader("Content-type", "application/json");
   res.status(200).send({text, response_type: "ephemeral"});
@@ -241,10 +246,9 @@ app.post("/musa-status", async (req, res) => {
       });
       return;
     }
-    const inputID = (req.body.text as string)
-      .slice(2)
-      .split(">")[0]
-      .split("|")[0];
+    const inputID = (
+      (req.body.text as string).slice(2).split(">")[0] as string
+    ).split("|")[0] as string;
 
     userID = inputID;
     type = "specified";
@@ -274,7 +278,7 @@ app.post("/musa-status", async (req, res) => {
     text = "All good!";
   }
 
-  console.log(chalk.gray(`status requested for ${userID}: ${text}`))
+  console.log(chalk.gray(`status requested for ${userID}: ${text}`));
 
   res.setHeader("Content-type", "application/json");
   res.status(200).send({text, response_type: "ephemeral"});
@@ -304,7 +308,7 @@ app.post("/musa-list-users", async (req, res) => {
   );
   text = text.trim();
 
-  console.log(chalk.gray(`Users: ${text}`))
+  console.log(chalk.gray(`Users: ${text}`));
 
   res.setHeader("Content-type", "application/json");
   res.status(200).send({text, response_type: "ephemeral"});
@@ -429,15 +433,14 @@ const updateStatuses = async () => {
         if (profileJSON.currently_playing_type === "track") {
           statusString = profileJSON.item.name;
           statusString += " • ";
-          for (let i = 0; i < profileJSON.item.artists.length; i++) {
-            const artist = profileJSON.item.artists[i];
+          profileJSON.item.artists.forEach((artist, index) => {
             statusString += artist.name;
             if (
-              i !== profileJSON.item.artists.length - 1 &&
+              index !== profileJSON.item.artists.length - 1 &&
               profileJSON.item.artists.length > 1
             )
               statusString += ", ";
-          }
+          });
           statusEmoji = ":new_spotify:";
         } else if (profileJSON.currently_playing_type === "episode") {
           statusString = `${profileJSON.item.name} • ${profileJSON.item.show.name}`;
