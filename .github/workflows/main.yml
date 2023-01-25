@@ -36,5 +36,3 @@ jobs:
           platforms: linux/amd64, linux/arm64
           push: true
           tags: sconaway/musa:latest
-        # only run if commit doesn't contain [ci skip]
-        if: "!contains(github.event.head_commit.message, '[ci skip]')"
