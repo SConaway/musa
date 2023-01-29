@@ -14,7 +14,7 @@ const environmentVariables = [
 for (const env of environmentVariables) {
   if (!process.env[env]) {
     console.error(chalk.red(`Please define ${env}`));
-    // process.exit(1);
+    process.exit(1);
   }
 }
 
@@ -45,7 +45,7 @@ app.set("view engine", "html");
 app.engine(
   "html",
   handlebars({
-    layoutsDir: __dirname + "/views",
+    layoutsDir: __dirname + "/../views",
     extname: ".html",
   }),
 );
