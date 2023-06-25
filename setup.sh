@@ -6,8 +6,10 @@ echo $(uname -a)
 
 ls -la
 
-yarn p:gen
+# yarn p:gen
+./node_modules/.bin/prisma generate
 
-yarn build
+# yarn build
+./node_modules/.bin/tsc
 
 rm -rf /root/.cache

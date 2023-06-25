@@ -21,7 +21,8 @@
     "noPropertyAccessFromIndexSignature": false,
     "esModuleInterop": true,
     "resolveJsonModule": true,
-    "outDir": "dist"
+    "outDir": "dist",
+    "module": "ESNext"
     // "module": "com"
   },
   "exclude": ["dist"]

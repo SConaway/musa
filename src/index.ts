@@ -20,17 +20,17 @@ for (const env of environmentVariables) {
 
 import express from "express";
 import {engine as handlebars} from "express-handlebars";
-import {urlencoded} from "body-parser";
+import bodyparser from "body-parser";
 import fetch from "node-fetch";
 import {ToadScheduler, SimpleIntervalJob, AsyncTask} from "toad-scheduler";
 
-import prisma from "./prisma";
+import prisma from "./prisma.js";
 import type {
   SlackAuthResponse,
   SlackProfileSetResponse,
   SpotifyAuthResponse,
   SpotifyPlayerResponse,
-} from "./types";
+} from "./types.js";
 
 // const prisma = new PrismaClient({log: ["query", "info", `warn`, `error`]});
 
@@ -39,13 +39,14 @@ const app = express();
 app.use(express.json());
 app.use(express.static("public"));
 
-app.use(urlencoded({extended: true}));
+app.use(bodyparser.urlencoded({extended: true}));
 
 app.set("view engine", "html");
 app.engine(
   "html",
   handlebars({
-    layoutsDir: __dirname + "/../views",
+    // layoutsDir: __dirname + "/../views",
+    layoutsDir: import.meta.url.replace("file://", "") + "/../views",
     extname: ".html",
   }),
 );

@@ -6,6 +6,8 @@ echo $(uname -a)
 
 export NODE_ENV=production
 
-yarn p:deploy
+# yarn p:deploy
+./node_modules/.bin/prisma migrate deploy
 
-yarn start
+# yarn start
+node dist/index.js
