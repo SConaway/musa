@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   db:
-    image: "postgres:14-alpine"
+    image: "postgres:15-alpine"
     volumes:
       - "${HOME}/postgres-data/:/var/lib/postgresql/data"
     environment:
@@ -12,6 +12,7 @@ services:
 
   app:
     image: "sconaway/musa"
+    #  `docker compose exec app bash`, then `yarn prisma studio` to manage
     environment:
       - "DATABASE_URL=postgresql://postgres:<url-encoded db password>@db:5432/postgres"
       - "SLACK_CLIENT_ID=<slack id>"

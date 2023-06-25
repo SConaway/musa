@@ -1,0 +1,10 @@
+version: "3.8"
+
+services:
+  db:
+    image: "postgres:15-alpine"
+    environment:
+      - "POSTGRES_PASSWORD=qwerty12"
+    ports:
+      - "5432:5432"
+    

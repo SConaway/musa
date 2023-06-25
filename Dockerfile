@@ -1,4 +1,4 @@
-FROM node:lts-slim as builder
+FROM node:20-slim as builder
 
 WORKDIR /usr/src/app
 
@@ -11,7 +11,7 @@ COPY . .
 RUN ./setup.sh
 
 
-FROM node:lts-slim as runner
+FROM node:20-slim as runner
 
 WORKDIR /usr/src/app
 
