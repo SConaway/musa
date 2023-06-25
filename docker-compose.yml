@@ -12,14 +12,17 @@ services:
 
   app:
     image: "sconaway/musa"
-    #  `docker compose exec app bash`, then `yarn prisma studio` to manage
+    #  `docker compose exec -it app yarn prisma studio` to manage
     environment:
       - "DATABASE_URL=postgresql://postgres:<url-encoded db password>@db:5432/postgres"
       - "SLACK_CLIENT_ID=<slack id>"
       - "SLACK_CLIENT_SECRET=<slack secret>"
-      - "SPOTIFY_CLIENT_ID=<spotify id>"
-      - "SPOTIFY_CLIENT_SECRET=<spotify secret>"
+      - "SPOTIFY_CLIENTS=1"
+      - "SPOTIFY_CLIENT_0_ID=<spotify id>"
+      - "SPOTIFY_CLIENT_0_SECRET=<spotify secret>"
+      - "ADMIN_USER_ID=<your slack user id>"
       - "HOST=https://<final base url, no slash at end>"
+
     networks:
       - app
     depends_on:
