@@ -18,6 +18,7 @@ model User {
   spotifyRefresh         String?
   spotifyToken           String?
   spotifyTokenExpiration DateTime?
+  spotifyClient          Int       @default(1)
 
   enabled Boolean @default(true)
 }

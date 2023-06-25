@@ -7,8 +7,7 @@ const environmentVariables = [
   "DATABASE_URL",
   "SLACK_CLIENT_ID",
   "SLACK_CLIENT_SECRET",
-  "SPOTIFY_CLIENT_ID",
-  "SPOTIFY_CLIENT_SECRET",
+  "SPOTIFY_CLIENTS",
   "ADMIN_USER_ID",
 ];
 for (const env of environmentVariables) {
@@ -17,6 +16,33 @@ for (const env of environmentVariables) {
     process.exit(1);
   }
 }
+// parse num clients and make sure they each have `SPOTIFY_CLIENT_x_{ID,SECRET}`
+const numClients = parseInt(process.env.SPOTIFY_CLIENTS as string, 10);
+let spotifyClients: {id: String; secret: String}[] = [];
+if (isNaN(numClients)) {
+  console.error(chalk.red(`SPOTIFY_CLIENTS must be a number`));
+  process.exit(1);
+}
+for (let i = 0; i < numClients; i++) {
+  if (
+    !process.env[`SPOTIFY_CLIENT_${i}_ID`] ||
+    !process.env[`SPOTIFY_CLIENT_${i}_SECRET`]
+  ) {
+    console.error(
+      chalk.red(
+        `Please define SPOTIFY_CLIENT_${i}_ID and SPOTIFY_CLIENT_${i}_SECRET`,
+      ),
+    );
+    process.exit(1);
+  } else {
+    spotifyClients.push({
+      id: process.env[`SPOTIFY_CLIENT_${i}_ID`] as string,
+      secret: process.env[`SPOTIFY_CLIENT_${i}_SECRET`] as string,
+    });
+  }
+}
+// console.log(spotifyClients);
+// console.log(spotifyClients[0]);
 
 import express from "express";
 import {engine as handlebars} from "express-handlebars";
@@ -100,7 +126,7 @@ app.get("/slack", async (req, res) => {
 
     res.render("slack-success", {
       layout: false,
-      spotifyClientID: process.env.SPOTIFY_CLIENT_ID,
+      spotifyClientID: process.env.SPOTIFY_CLIENT_1_ID, // change as needed
       host: process.env.HOST ?? "http://localhost:3000",
       userID: json.authed_user.id,
     });
@@ -141,12 +167,13 @@ app.get("/spotify", async (req, res) => {
   }
 
   if (req.query.code) {
+    // change as needed
     const f = await fetch(
       `https://accounts.spotify.com/api/token?code=${
         req.query.code
       }&grant_type=authorization_code&client_id=${
-        process.env.SPOTIFY_CLIENT_ID
-      }&client_secret=${process.env.SPOTIFY_CLIENT_SECRET}&redirect_uri=${
+        process.env.SPOTIFY_CLIENT_1_ID
+      }&client_secret=${process.env.SPOTIFY_CLIENT_1_SECRET}&redirect_uri=${
         process.env.HOST ?? "http://localhost:3000"
       }/spotify`,
       {
@@ -353,6 +380,8 @@ const updateStatuses = async () => {
   const users = await prisma.user.findMany();
 
   for await (let user of users) {
+    const client = spotifyClients[user.spotifyClient];
+    // console.log(client);
     try {
       if (
         !user.spotifyTokenExpiration ||
@@ -368,7 +397,7 @@ const updateStatuses = async () => {
       }
       if (new Date() > user.spotifyTokenExpiration) {
         const f = await fetch(
-          `https://accounts.spotify.com/api/token?grant_type=refresh_token&refresh_token=${user.spotifyRefresh}&client_id=${process.env.SPOTIFY_CLIENT_ID}&client_secret=${process.env.SPOTIFY_CLIENT_SECRET}`,
+          `https://accounts.spotify.com/api/token?grant_type=refresh_token&refresh_token=${user.spotifyRefresh}&client_id=${client.id}&client_secret=${client.secret}`,
           {
             headers: {
               "Content-Type": "application/x-www-form-urlencoded",
@@ -420,12 +449,16 @@ const updateStatuses = async () => {
       const text = await f.text();
 
       if (!text.length) {
-        console.log(chalk.gray(`${user.slackID}: no music, skipping update`));
+        console.log(
+          chalk.gray(
+            `${user.slackID} (CID=${user.spotifyClient}): no music, skipping update`,
+          ),
+        );
         continue;
       } else if (text.startsWith("U")) {
         console.log(
           chalk.gray(
-            `${user.slackID}: user is not allow-listed, skipping update`,
+            `${user.slackID} (CID=${user.spotifyClient}): user is not allow-listed, skipping update`,
           ),
         );
         continue;
@@ -433,7 +466,7 @@ const updateStatuses = async () => {
         console.log(chalk.yellow(text));
         console.log(
           chalk.gray(
-            `${user.slackID}: other error, skipping update, status=${f.status}, text=${text}`,
+            `${user.slackID} (CID=${user.spotifyClient}): other error, skipping update, status=${f.status}, text=${text}`,
           ),
         );
         continue;
@@ -444,7 +477,7 @@ const updateStatuses = async () => {
       if ("error" in profileJSON) {
         console.warn(
           chalk.red(
-            `Error fetching ${user.slackID}'s player: status=${profileJSON.error.status} description=${profileJSON.error.message}`,
+            `Error fetching ${user.slackID}'s player:  CID=${user.spotifyClient} status=${profileJSON.error.status} description=${profileJSON.error.message}`,
           ),
         );
         continue;
@@ -476,14 +509,18 @@ const updateStatuses = async () => {
         } else {
           console.log(
             chalk.yellow(
-              `${user.slackID}: unknown type playing`,
+              `${user.slackID} (CID=${user.spotifyClient}): unknown type playing`,
               chalk.bgWhiteBright(JSON.stringify(profileJSON)),
             ),
           );
         }
         if (statusString.length >= 100)
           statusString = statusString.substr(0, 97) + "...";
-        console.log(chalk.gray(`${user.slackID}: playing: ${statusString}`));
+        console.log(
+          chalk.gray(
+            `${user.slackID} (CID=${user.spotifyClient}): playing: ${statusString}`,
+          ),
+        );
 
         const f = await fetch(`https://slack.com/api/users.profile.set`, {
           headers: {
