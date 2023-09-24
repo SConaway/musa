@@ -345,7 +345,8 @@ app.post("/musa-list-users", async (req, res) => {
     return;
   }
 
-  let text = `Musa users are: \n`;
+  let text = "Musa users are: \n";
+  text += "index, @slackName (slackID), enabled, spotifyTokenExpiration \n";
 
   const users = await prisma.user.findMany();
 
