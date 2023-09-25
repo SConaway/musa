@@ -346,7 +346,7 @@ app.post("/musa-list-users", async (req, res) => {
   }
 
   let text = "Musa users are: \n";
-  text += "index, @slackName (slackID), enabled, spotifyTokenExpiration \n";
+  text += "index, @slackName (slackID), enabled, spotifyTokenExpiration, spotify client \n";
 
   const users = await prisma.user.findMany();
 
@@ -355,7 +355,7 @@ app.post("/musa-list-users", async (req, res) => {
       (text = text.concat(
         `${index + 1}. <@${user.slackID}> (\`${user.slackID}\`), ${
           user.enabled
-        }, ${user.spotifyTokenExpiration} \n`,
+        }, ${user.spotifyTokenExpiration}, ${user.spotifyClient} \n`,
       )),
   );
   text = text.trim();
