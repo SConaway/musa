@@ -22,7 +22,7 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "outDir": "dist",
-    "module": "ESNext"
+    // "module": "ESNext"
     // "module": "com"
   },
   "exclude": ["dist"]
