@@ -9,6 +9,7 @@ const environmentVariables = [
   "SLACK_CLIENT_SECRET",
   "SPOTIFY_CLIENTS",
   "ADMIN_USER_ID",
+  "HOST",
 ];
 for (const env of environmentVariables) {
   if (!process.env[env]) {
@@ -50,13 +51,13 @@ import bodyparser from "body-parser";
 import fetch from "node-fetch";
 import {ToadScheduler, SimpleIntervalJob, AsyncTask} from "toad-scheduler";
 
-import prisma from "./prisma.js";
-import type {
-  SlackAuthResponse,
-  SlackProfileSetResponse,
-  SpotifyAuthResponse,
-  SpotifyPlayerResponse,
-} from "./types.js";
+import updateStatuses from "./updateStatuses.js";
+
+import slackHandler from "./routes/slack.js";
+import spotifyHandler from "./routes/spotify.js";
+import musaToggleHandler from "./routes/musaToggle.js";
+import musaStatusHandler from "./routes/musaStatus.js";
+import musaListUsersHandler from "./routes/musaListUsers.js";
 
 // const prisma = new PrismaClient({log: ["query", "info", `warn`, `error`]});
 
@@ -85,286 +86,15 @@ app.get("/", (_req, res) =>
   }),
 );
 
-app.get("/slack", async (req, res) => {
-  if (req.query.error) {
-    console.log(
-      chalk.red.bgWhiteBright(
-        `error authing slack: ${JSON.stringify(req.query)}`,
-      ),
-    );
-    res.send(`Error: ${req.query.error}`);
-    return;
-  }
+app.get("/slack", slackHandler);
 
-  const f = await fetch(
-    `https://slack.com/api/oauth.v2.access?code=${req.query.code}&client_id=${process.env.SLACK_CLIENT_ID}&client_secret=${process.env.SLACK_CLIENT_SECRET}`,
-    {
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      method: "POST",
-    },
-  );
+app.get("/spotify", spotifyHandler);
 
-  const json = (await f.json()) as SlackAuthResponse;
+app.post("/musa-toggle", musaToggleHandler);
 
-  if (json.ok) {
-    if (
-      !(await prisma.user.findUnique({
-        where: {
-          slackID: json.authed_user.id,
-        },
-      }))
-    )
-      await prisma.user.create({
-        data: {
-          slackID: json.authed_user.id,
-          slackToken: json.authed_user.access_token,
-          enabled: false,
-        },
-      });
+app.post("/musa-status", musaStatusHandler);
 
-    res.render("slack-success", {
-      layout: false,
-      spotifyClientID: process.env.SPOTIFY_CLIENT_1_ID, // change as needed
-      host: process.env.HOST ?? "http://localhost:3000",
-      userID: json.authed_user.id,
-    });
-    return;
-  } else {
-    if (json.error) {
-      console.log(
-        chalk.red.bgWhiteBright(`error fetching slack token: ${json.error}`),
-      );
-      res.send(`Error: ${json.error}`);
-      return;
-    }
-  }
-});
-
-app.get("/spotify", async (req, res) => {
-  if (req.query.error) {
-    console.log(chalk.red.bgWhiteBright(`error authing spotify: ${req.query}`));
-    res.send(`Error: ${req.query.error}`);
-    return;
-  }
-
-  if (
-    !req.query.state ||
-    !(await prisma.user.findUnique({
-      where: {
-        slackID: req.query.state as string,
-      },
-    }))
-  ) {
-    console.log(
-      chalk.red.bgWhiteBright(
-        `error authing spotify: missing SlackID=${req.query.state}`,
-      ),
-    );
-    res.send("SlackID missing. Please try again.");
-    return;
-  }
-
-  if (req.query.code) {
-    // change as needed
-    const f = await fetch(
-      `https://accounts.spotify.com/api/token?code=${
-        req.query.code
-      }&grant_type=authorization_code&client_id=${
-        process.env.SPOTIFY_CLIENT_1_ID
-      }&client_secret=${process.env.SPOTIFY_CLIENT_1_SECRET}&redirect_uri=${
-        process.env.HOST ?? "http://localhost:3000"
-      }/spotify`,
-      {
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        method: "POST",
-      },
-    );
-
-    const json = (await f.json()) as SpotifyAuthResponse;
-
-    if ("error" in json) {
-      console.log(
-        chalk.red.bgWhiteBright(`error fetching spotify token: ${json}`),
-      );
-      res.send(`Error: ${json.error} description=${json.error_description}`);
-      return;
-    }
-
-    await prisma.user.update({
-      where: {
-        slackID: req.query.state as string,
-      },
-      data: {
-        spotifyRefresh: json.refresh_token,
-        spotifyToken: json.access_token,
-        spotifyTokenExpiration: new Date(
-          new Date().getTime() + (json.expires_in - 10) * 1000,
-        ),
-        enabled: true,
-      },
-    });
-
-    res.render("done", {
-      layout: false,
-      // spotifyClientID: process.env.SPOTIFY_CLIENT_ID,
-      // host: process.env.HOST ?? "http://localhost:3000",
-      // userID: json.authed_user.id,
-    });
-  }
-});
-
-app.post("/musa-toggle", async (req, res) => {
-  let text = "";
-
-  let userID = req.body.user_id as string;
-  let type: "requester" | "specified" = "requester";
-
-  if ((req.body.text as string).length > 1) {
-    if (req.body.user_id !== process.env.ADMIN_USER_ID) {
-      res.setHeader("Content-type", "application/json");
-      res.status(200).send({
-        text: "You cannot change Musa status for other users.",
-        response_type: "ephemeral",
-      });
-      return;
-    }
-    const inputID = (
-      (req.body.text as string).slice(2).split(">")[0] as string
-    ).split("|")[0] as string;
-
-    userID = inputID;
-    type = "specified";
-  }
-
-  let user = await prisma.user.findUnique({
-    where: {
-      slackID: userID,
-    },
-  });
-
-  if (!user) {
-    console.log(
-      chalk.red.bgWhiteBright(
-        `error toggling: missing SlackID=${req.body.user_id}`,
-      ),
-    );
-    if (type === "specified")
-      text = `<@${userID}> (\`${userID}\`) does not exist in Musa.`;
-    else
-      text = `You, <@${userID}> (\`${userID}\`), have not signed up for Musa. Check out <#C02A1GTH9TK> to join!`;
-  } else {
-    console.log(chalk.green(`${user.slackID}: toggling`));
-    user = await prisma.user.update({
-      where: {
-        slackID: user.slackID,
-      },
-      data: {
-        enabled: !user.enabled,
-      },
-    });
-    text = `${
-      user.enabled ? "Enabled" : "Disabled"
-    }! Re-run this command to toggle. `;
-    console.log(
-      chalk.gray(
-        `toggle requested for ${req.body.user_id as string}, enabled=${
-          user.enabled
-        }`,
-      ),
-    );
-  }
-
-  res.setHeader("Content-type", "application/json");
-  res.status(200).send({text, response_type: "ephemeral"});
-});
-
-app.post("/musa-status", async (req, res) => {
-  let text = "";
-
-  let userID = req.body.user_id as string;
-  let type: "requester" | "specified" = "requester";
-
-  if ((req.body.text as string).length > 1) {
-    if (req.body.user_id !== process.env.ADMIN_USER_ID) {
-      res.setHeader("Content-type", "application/json");
-      res.status(200).send({
-        text: "You cannot check Musa status for other users.",
-        response_type: "ephemeral",
-      });
-      return;
-    }
-    const inputID = (
-      (req.body.text as string).slice(2).split(">")[0] as string
-    ).split("|")[0] as string;
-
-    userID = inputID;
-    type = "specified";
-  }
-
-  let user = await prisma.user.findUnique({
-    where: {
-      slackID: userID,
-    },
-  });
-
-  if (!user || !user.slackToken) {
-    if (type === "requester")
-      text = `You, <@${userID}> (\`${userID}\`), have not signed up for Musa. Check out <#C02A1GTH9TK> to join!`;
-    else text = `<@${userID}> (\`${userID}\`) has not signed up for Musa.`;
-  } else if (
-    !user.spotifyRefresh ||
-    !user.spotifyToken ||
-    !user.spotifyTokenExpiration
-  ) {
-    text = `Spotify authentication incomplete. Head to ${process.env.HOST} to continue.`;
-  } else if (new Date() > user.spotifyTokenExpiration) {
-    text = `Spotify authentication expired. Head to ${process.env.HOST} to fix.`;
-  } else if (!user.enabled) {
-    text = "Musa disabled. Run `/musa-toggle` to re-enable.";
-  } else {
-    text = "All good!";
-  }
-
-  console.log(chalk.gray(`status requested for ${userID}: ${text}`));
-
-  res.setHeader("Content-type", "application/json");
-  res.status(200).send({text, response_type: "ephemeral"});
-});
-
-app.post("/musa-list-users", async (req, res) => {
-  if (req.body.user_id !== process.env.ADMIN_USER_ID) {
-    res.setHeader("Content-type", "application/json");
-    res.status(200).send({
-      text: "You cannot list Musa users.",
-      response_type: "ephemeral",
-    });
-    return;
-  }
-
-  let text = "Musa users are: \n";
-  text += "index, @slackName (slackID), enabled, spotifyTokenExpiration, spotify client \n";
-
-  const users = await prisma.user.findMany();
-
-  users.forEach(
-    (user, index) =>
-      (text = text.concat(
-        `${index + 1}. <@${user.slackID}> (\`${user.slackID}\`), ${
-          user.enabled
-        }, ${user.spotifyTokenExpiration}, ${user.spotifyClient} \n`,
-      )),
-  );
-  text = text.trim();
-
-  console.log(chalk.gray(`Users: ${text}`));
-
-  res.setHeader("Content-type", "application/json");
-  res.status(200).send({text, response_type: "ephemeral"});
-});
+app.post("/musa-list-users", musaListUsersHandler);
 
 app.listen(3000, () =>
   console.log(
@@ -374,219 +104,17 @@ app.listen(3000, () =>
   ),
 );
 
-const updateStatuses = async () => {
-  console.log(chalk.green("---"));
-  console.log(chalk.green(new Date()));
-
-  const users = await prisma.user.findMany();
-
-  for await (let user of users) {
-    const client = spotifyClients[user.spotifyClient];
-    // console.log(client);
-    try {
-      if (
-        !user.spotifyTokenExpiration ||
-        !user.spotifyRefresh ||
-        !user.spotifyToken
-      ) {
-        console.log(
-          chalk.gray(
-            `${user.slackID}: user does not have a spotify token, skipping update`,
-          ),
-        );
-        continue;
-      }
-      if (new Date() > user.spotifyTokenExpiration) {
-        const f = await fetch(
-          `https://accounts.spotify.com/api/token?grant_type=refresh_token&refresh_token=${user.spotifyRefresh}&client_id=${client.id}&client_secret=${client.secret}`,
-          {
-            headers: {
-              "Content-Type": "application/x-www-form-urlencoded",
-            },
-            method: "POST",
-          },
-        );
-
-        const json = (await f.json()) as SpotifyAuthResponse;
-
-        if ("error" in json) {
-          console.log(
-            chalk.red.bgWhiteBright(
-              `Error renewing ${user.slackID}'s token: ${json.error} description=${json.error_description}`,
-            ),
-          );
-          continue;
-        }
-
-        user = await prisma.user.update({
-          where: {
-            slackID: user.slackID,
-          },
-          data: {
-            spotifyToken: json.access_token,
-            spotifyTokenExpiration: new Date(
-              new Date().getTime() + (json.expires_in - 10) * 1000,
-            ),
-          },
-        });
-      }
-
-      if (!user.enabled) {
-        console.log(chalk.gray(`${user.slackID}: disabled`));
-        continue;
-      }
-
-      const f = await fetch(
-        `https://api.spotify.com/v1/me/player?additional_types=track,episode`,
-        {
-          headers: {
-            "Content-Type": "application/json; charset=utf-8",
-            Accept: "application/json; charset=utf-8",
-            Authorization: `Bearer ${user.spotifyToken}`,
-          },
-          method: "GET",
-        },
-      );
-      const text = await f.text();
-
-      if (!text.length) {
-        console.log(
-          chalk.gray(
-            `${user.slackID} (CID=${user.spotifyClient}): no music, skipping update`,
-          ),
-        );
-        continue;
-      } else if (text.startsWith("U")) {
-        console.log(
-          chalk.gray(
-            `${user.slackID} (CID=${user.spotifyClient}): user is not allow-listed, skipping update`,
-          ),
-        );
-        continue;
-      } else if (!text.startsWith("{")) {
-        console.log(chalk.yellow(text));
-        console.log(
-          chalk.gray(
-            `${user.slackID} (CID=${user.spotifyClient}): other error, skipping update, status=${f.status}, text=${text}`,
-          ),
-        );
-        continue;
-      }
-
-      const profileJSON = JSON.parse(text) as SpotifyPlayerResponse;
-
-      if ("error" in profileJSON) {
-        console.warn(
-          chalk.red(
-            `Error fetching ${user.slackID}'s player:  CID=${user.spotifyClient} status=${profileJSON.error.status} description=${profileJSON.error.message}`,
-          ),
-        );
-        continue;
-      }
-
-      if (profileJSON.is_playing) {
-        let statusString = "";
-        let statusEmoji = "";
-
-        if (profileJSON.currently_playing_type === "track") {
-          statusString = profileJSON.item.name;
-          statusString += " • ";
-          profileJSON.item.artists.forEach((artist, index) => {
-            statusString += artist.name;
-            if (
-              index !== profileJSON.item.artists.length - 1 &&
-              profileJSON.item.artists.length > 1
-            )
-              statusString += ", ";
-          });
-          statusEmoji = ":new_spotify:";
-        } else if (profileJSON.currently_playing_type === "episode") {
-          statusString = `${profileJSON.item.name} • ${profileJSON.item.show.name}`;
-          statusEmoji = ":microphone:";
-        } else if (profileJSON.currently_playing_type === "ad") {
-          console.log(chalk.gray(`${user.slackID}: listening to type=ad`));
-        } else if (profileJSON.currently_playing_type === "unknown") {
-          console.log(chalk.gray(`${user.slackID}: listening to type=unknown`));
-        } else {
-          console.log(
-            chalk.yellow(
-              `${user.slackID} (CID=${user.spotifyClient}): unknown type playing`,
-              chalk.bgWhiteBright(JSON.stringify(profileJSON)),
-            ),
-          );
-        }
-        if (statusString.length >= 100)
-          statusString = statusString.substr(0, 97) + "...";
-        console.log(
-          chalk.gray(
-            `${user.slackID} (CID=${user.spotifyClient}): playing: ${statusString}`,
-          ),
-        );
-
-        const f = await fetch(`https://slack.com/api/users.profile.set`, {
-          headers: {
-            "Content-Type": "application/json; charset=utf-8",
-            Authorization: `Bearer ${user.slackToken}`,
-          },
-          method: "POST",
-          body: JSON.stringify({
-            profile: {
-              status_text: statusString,
-              status_emoji: statusEmoji,
-              status_expiration: 90,
-            },
-          }),
-        });
-
-        const slackJSON = (await f.json()) as SlackProfileSetResponse;
-
-        if (!slackJSON.ok) {
-          console.warn(
-            chalk.red.bgWhiteBright(
-              `Error setting ${user.slackID}'s status: ${slackJSON.error}`,
-            ),
-          );
-          continue;
-        }
-      } else {
-        console.log(
-          chalk.gray(`${user.slackID}: not playing, skipping update`),
-        );
-      }
-    } catch (error) {
-      console.error(
-        chalk.red.bgWhite(
-          `error: other error, user=${user.slackID}, error=${JSON.stringify(
-            error,
-          )}`,
-        ),
-      );
-    }
-  }
-};
-updateStatuses();
+updateStatuses(spotifyClients);
 
 const scheduler = new ToadScheduler();
-const task = new AsyncTask("update statuses", updateStatuses, (err: Error) => {
-  console.error(`Error in task: ${err}`);
-});
+const task = new AsyncTask(
+  "update statuses",
+  () => updateStatuses(spotifyClients),
+  (err: Error) => {
+    console.error(`Error in task: ${err}`);
+  },
+);
 const job = new SimpleIntervalJob({seconds: 30}, task);
 scheduler.addSimpleIntervalJob(job);
 // when stopping your app
 // scheduler.stop();
-
-// const f = await fetch(`https://slack.com/api/users.profile.set`, {
-//   headers: {
-//     "Content-Type": "application/json; charset=utf-8",
-//     Authorization: `Bearer ${user.slackToken}`,
-//   },
-//   method: "POST",
-//   body: JSON.stringify({
-//     profile: {
-//       status_text: "making some bots...",
-//       // status_emoji: ":mountain_railway:",
-//       status_expiration: 0,
-//     },
-//   }),
-// });
-// const json = (await f.json()) as SlackProfileSetResponse;
