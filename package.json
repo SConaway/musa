@@ -25,12 +25,12 @@
   },
   "devDependencies": {
     "@tsconfig/node20": "^20.1.2",
-    "@types/express": "^4.17.20",
-    "@types/node": "^20.8.7",
-    "@types/node-fetch": "^2.6.7",
-    "nodemon": "^3.0.1",
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.10.5",
+    "@types/node-fetch": "^2.6.9",
+    "nodemon": "^3.0.2",
     "prisma": "5",
-    "ts-node": "^10.9.1",
-    "typescript": "^5.2.2"
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
   }
 }
