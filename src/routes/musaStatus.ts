@@ -47,7 +47,8 @@ export default async function musaStatusHandler(req: Request, res: Response) {
   } else if (!user.enabled) {
     text = "Musa disabled. Run `/musa-toggle` to re-enable.";
   } else {
-    text = "All good!";
+    if (type === "requester") text = "All good!";
+    else text = `<@${userID}> (\`${userID}\`): All good.`;
   }
 
   console.log(chalk.gray(`status requested for ${userID}: ${text}`));
