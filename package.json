@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node dist/index.js",
     "build": "tsc",
-    "dev": "nodemon --watch src --exec yarn node --loader ts-node/esm  ./src/index.ts",
+    "dev": "tsx watch ./src/index.ts",
     "pretty": "prettier --write .",
     "p:gen": "yarn prisma generate",
     "p:deploy": "prisma migrate deploy",
@@ -28,9 +28,8 @@
     "@types/express": "^4.17.21",
     "@types/node": "^20.10.5",
     "@types/node-fetch": "^2.6.9",
-    "nodemon": "^3.0.2",
     "prisma": "5",
-    "ts-node": "^10.9.2",
+    "tsx": "^4.7.0",
     "typescript": "^5.3.3"
   }
 }
