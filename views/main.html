@@ -150,6 +150,7 @@
     .preview-image {
       height: 5.5rem;
       border-radius: 20px;
+      margin-bottom: 2rem;
     }
 
     .link-image:hover {
@@ -157,6 +158,30 @@
       transition-property: all;
       transition-duration: 0.2s;
 
+    }
+
+    .closed-notice {
+      background-color: #fef3cd;
+      border: 1.5px solid #e0a800;
+      border-radius: 12px;
+      padding: 1rem 1.5rem;
+      font-size: 1rem;
+      line-height: 1.5;
+      text-align: left;
+    }
+
+    .closed-notice summary {
+      cursor: pointer;
+      font-size: 0.85rem;
+      color: #555e6b;
+      margin-top: 0.75rem;
+    }
+
+    .closed-notice details img {
+      margin-top: 0.5rem;
+      max-width: 100%;
+      border-radius: 8px;
+      border: 1px solid #ccc;
     }
   </style>
 </head>
@@ -181,14 +206,13 @@
       <div class="preview"><img src="https://cloud-93teffpp1-hack-club-bot.vercel.app/0slack_07-30-2021_08.33.15_pm.png"
           alt="Preview of a Musa-set status" class="preview-image"></div>
       <!-- get new one and host in folder -->
-      <div class="instructions">To begin, click the button below, then follow the prompts:
-
-
-        <div class="link-container"><a class="link"
-            href="https://slack.com/oauth/v2/authorize?user_scope=users.profile:write&client_id={{{slackClientID}}}&redirect_uri={{{host}}}/slack"><img
-              class="link-image" alt="Add to Slack" height="40" width="139"
-              src="https://platform.slack-edge.com/img/add_to_slack.png"
-              srcset="https://platform.slack-edge.com/img/add_to_slack.png 1x, https://platform.slack-edge.com/img/add_to_slack@2x.png 2x" /></a>
+      <div class="instructions">
+        <div class="closed-notice">
+          <strong>Signups are currently closed.</strong> Spotify has restricted Development Mode apps to a maximum of 5 authorized users, so Musa cannot accept new sign-ups at this time.
+          <details>
+            <summary>See Spotify's announcement (Feb 26, 2026)</summary>
+            <img src="/spotify-email-2026-02-26.png" alt="Spotify for Developers email dated February 26, 2026 announcing new restrictions for Development Mode apps, including a limit of 5 authorized users per Client ID." />
+          </details>
         </div>
       </div>
     </div>

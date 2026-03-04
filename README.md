@@ -1,5 +1,12 @@
 # Musa
 
+> [!NOTE]
+> Signups are currently closed. As of March 9, 2026, Spotify restricts Development Mode apps to a maximum of 5 authorized users. New users must be manually added to the Spotify app's allowlist by the developer. See Spotify's announcement, below:
+> <details>
+> <summary>Spotify Announcement, dated 2026-02-26</summary>
+> <image src="public/spotify-email-2026-02-26.png" alt="Spotify's announcement" />
+> </details>
+
 ## Instructions
 
 1. Create an app on Slack's [App Directory](https://api.slack.com/apps), set the App Manifest to the following:
